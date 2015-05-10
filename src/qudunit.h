@@ -99,7 +99,7 @@ public:
 private:
     UdUnit m_from;
     UdUnit m_to;
-    cv_converter *m_converter = nullptr;
+    cv_converter *m_converter;
 };
 
 class QUDUNITSHARED_EXPORT UdUnitSystem

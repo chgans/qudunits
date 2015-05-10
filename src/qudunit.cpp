@@ -255,7 +255,7 @@ UdUnit operator /(const UdUnit &lhs, const UdUnit &rhs)
 
 
 UdUnitConverter::UdUnitConverter(const UdUnit &from, const UdUnit &to):
-    m_from(from), m_to(to)
+    m_from(from), m_to(to), m_converter(nullptr)
 {
     ut_set_status(UT_SUCCESS);
     m_converter = ut_get_converter(m_from.m_unit, m_to.m_unit);
