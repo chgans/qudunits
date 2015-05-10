@@ -66,7 +66,6 @@ public:
 private:
     friend class UdUnitSystem;
     friend class UdUnitConverter;
-    friend struct ut_visitor;
     UdUnit(ut_unit *unit, int status);
 
     static ut_visitor m_visitor;
@@ -79,9 +78,9 @@ private:
                                      double origin, void *arg);
     static ut_status visit_logarithmic(const ut_unit *_unit, double base,
                                        const ut_unit *reference, void *arg);
-    ut_unit *m_unit = nullptr;
-    int m_errorStatus = 0;
-    Type m_type = NullUnit;
+    ut_unit *m_unit;
+    int m_errorStatus;
+    Type m_type;
 };
 
 class QUDUNITSHARED_EXPORT UdUnitConverter {
@@ -93,14 +92,14 @@ public:
     UdUnit fromUnit() const;
     UdUnit toUnit() const;
 
-    bool canConvert() const;
+    bool isValid() const;
     qreal convert(qreal value);
     QVector<qreal> convert(const QVector<qreal> values);
 
 private:
     UdUnit m_from;
     UdUnit m_to;
-    cv_converter *m_converter;
+    cv_converter *m_converter = nullptr;
 };
 
 class QUDUNITSHARED_EXPORT UdUnitSystem
@@ -121,13 +120,6 @@ private:
     ut_system *m_system;
     int m_error;
     QString m_errorMessage;
-};
-
-class QUDUNITSHARED_EXPORT Qudunit
-{
-
-public:
-    Qudunit();
 };
 
 #endif // QUDUNIT_H

@@ -111,17 +111,21 @@ ut_visitor UdUnit::m_visitor = {
 };
 
 UdUnit::UdUnit(ut_unit *unit, int status):
-    m_unit(unit), m_errorStatus(status)
+    m_unit(unit), m_errorStatus(status),
+    m_type(NullUnit)
 {
     ut_accept_visitor(m_unit, &m_visitor, (void *)(this));
 }
 
-UdUnit::UdUnit()
+UdUnit::UdUnit():
+    m_unit(nullptr),
+    m_type(NullUnit)
 {
 
 }
 
-UdUnit::UdUnit(const UdUnit &other)
+UdUnit::UdUnit(const UdUnit &other):
+    m_type(NullUnit)
 {
     m_unit = ut_clone(other.m_unit);
     ut_accept_visitor(m_unit, &m_visitor, (void *)(this));
@@ -253,7 +257,9 @@ UdUnit operator /(const UdUnit &lhs, const UdUnit &rhs)
 UdUnitConverter::UdUnitConverter(const UdUnit &from, const UdUnit &to):
     m_from(from), m_to(to)
 {
+    ut_set_status(UT_SUCCESS);
     m_converter = ut_get_converter(m_from.m_unit, m_to.m_unit);
+    //m_status = ut_get_status();
 }
 
 UdUnitConverter::~UdUnitConverter()
@@ -261,11 +267,12 @@ UdUnitConverter::~UdUnitConverter()
     cv_free(m_converter);
 }
 
-bool UdUnitConverter::canConvert() const
+bool UdUnitConverter::isValid() const
 {
-    return ut_are_convertible(m_from.m_unit, m_to.m_unit) != 0;
+    return m_converter != nullptr;
 }
 
+// if canConvert() returns false, the result is undetermined
 qreal UdUnitConverter::convert(qreal value)
 {
     Q_ASSERT(m_converter != nullptr);

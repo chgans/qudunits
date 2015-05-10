@@ -34,6 +34,8 @@ private Q_SLOTS:
     void multiplying();
     void dividing_data();
     void dividing();
+    void convert_data();
+    void convert();
 
 private:
     UdUnitSystem *m_system;
@@ -228,6 +230,32 @@ void UdUnits2Test::dividing()
     UdUnit unit1 = m_system->unitBySymbol(symbol1);
     UdUnit unit2 = m_system->unitBySymbol(symbol2);
     QVERIFY((unit1/unit2).toString() == result);
+}
+
+void UdUnits2Test::convert_data()
+{
+    QTest::addColumn<QString>("from");
+    QTest::addColumn<QString>("to");
+    QTest::addColumn<bool>("validity");
+    QTest::addColumn<qreal>("value");
+    QTest::addColumn<qreal>("result");
+    QTest::newRow("valid")   << QString("m/s") << QString("km/h")  << true  << 1000.0/3600.0 << 1.0;
+    QTest::newRow("invalid") << QString("m/s") << QString("m/s^2") << false << 0.0           << 0.0;
+}
+
+void UdUnits2Test::convert()
+{
+    QFETCH(QString, from);
+    QFETCH(QString, to);
+    QFETCH(bool, validity);
+    QFETCH(qreal, value);
+    QFETCH(qreal, result);
+    UdUnit ufrom = m_system->unitFromString(from);
+    UdUnit uto = m_system->unitFromString(to);
+    UdUnitConverter converter(ufrom, uto);
+    QVERIFY(converter.isValid() == validity);
+    if (validity)
+        QVERIFY(converter.convert(value) == result);
 }
 
 
