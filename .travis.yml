@@ -15,7 +15,6 @@ before_install:
 script:
  - qmake
  - make -j$(nproc)
- - cd src && coverage run --source=. ../tests/tst_udunits2
- 
+
 after_success:
-  - coveralls --exclude tests --gcov-options '\-lp'
+  - coveralls --exclude lib --exclude tests --gcov-options '\-lp'
