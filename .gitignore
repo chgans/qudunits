@@ -29,6 +29,15 @@ Makefile*
 
 *.autosave
 
-#QtCtreator Qml
+# QtCtreator Qml
 *.qmlproject.user
 *.qmlproject.user.*
+
+# gwenview
+.directory
+
+# emacs
+*~
+
+# generated documentation
+doc/html
