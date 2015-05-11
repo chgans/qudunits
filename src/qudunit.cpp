@@ -58,6 +58,12 @@ QString UdUnitSystem::errorMessage() const
     return m_errorMessage;
 }
 
+UdUnitSystem::UdUnitSystem(ut_system *system):
+    m_system(system)
+{
+
+}
+
 ut_status UdUnit::visit_basic(const ut_unit *_unit, void *arg)
 {
     Q_UNUSED(_unit);
@@ -89,7 +95,7 @@ ut_status UdUnit::visit_timestamp(const ut_unit *_unit, const ut_unit *timeUnit,
 {
     Q_UNUSED(_unit);
     UdUnit *unit = (UdUnit*)(arg);
-    unit->m_type = UdUnit::TimeStampUnit;
+    unit->m_type = UdUnit::TimestampUnit;
     return UT_SUCCESS;
 }
 
@@ -141,6 +147,12 @@ bool UdUnit::isValid() const
     return m_unit != nullptr;
 }
 
+UdUnitSystem UdUnit::system()
+{
+    ut_system *system = ut_get_system(m_unit);
+
+}
+
 UdUnit::UnitType UdUnit::type() const
 {
     return m_type;
@@ -170,6 +182,11 @@ QString UdUnit::format(FormatForm form, FormatOption option) const
         return QString();
     else
         return QString::fromUtf8(buffer, nBytes);
+}
+
+bool UdUnit::isDimentionless() const
+{
+    return ut_is_dimensionless(m_unit) == 0;
 }
 
 UdUnit operator +(const UdUnit &lhs, qreal rhs)

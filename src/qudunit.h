@@ -22,7 +22,7 @@ public:
         BasicUnit,
         ProductUnit,
         GalileanUnit,
-        TimeStampUnit,
+        TimestampUnit,
         LogarithmicUnit
     };
 
@@ -59,17 +59,19 @@ public:
 
     // Galilean-unit:
     inline bool isGalilean() const { return type() == GalileanUnit; }
-    UdUnit underlyingUnit() const;
+    UdUnit underlyingUnit() const; // referenceUnit()
     qreal galileanScaleFactor() const; // non-unity scale factor
-    qreal galileanOrigin() const;     // non-zero origin
+    qreal galileanOrigin() const;     // origin()
 
     // Log-unit: base and reference
-    UdUnit logBaseUnit() const;
-    qreal logReference() const;
+    inline bool isLogarithmic() const { return type() == LogarithmicUnit; }
+    qreal logBase() const;
+    UdUnit referenceUnit() const;// referenceUnit()
 
     // Timestamp-unit:
-    UdUnit timeUnit() const;
-    qreal timeOrigin() const;
+    inline bool isTimestamp() const { return type() == TimestampUnit; }
+    UdUnit timeUnit() const; // referenceUnit()
+    qreal timeOrigin() const; // origin()
 
     // operations for equality, comparison
     friend bool operator ==(const UdUnit &lhs, const UdUnit &rhs);
@@ -87,6 +89,14 @@ public:
     friend UdUnit operator +(qreal lhs, const UdUnit &rhs);
     friend UdUnit operator -(const UdUnit &lhs, qreal rhs);
     friend UdUnit operator -(qreal lhs, const UdUnit &rhs);
+
+    UdUnit scaledBy(qreal factor) const;
+    UdUnit offsetBy(qreal offset) const;
+    UdUnit offsetByTime(qreal origin) const;
+    UdUnit inverted() const;
+    UdUnit raisedBy(int power) const;
+    UdUnit rootedBy(int root) const;
+    UdUnit toLogarithmic(qreal base) const;
 
 private:
     friend class UdUnitSystem;
@@ -133,9 +143,18 @@ private:
     cv_converter *m_converter;
 };
 
+// TODO: Allow to specify XML path
+//       either at construct time or maybe as a property
+// TODO: Should we parse the files to offer enumeration service?
 class QUDUNITSHARED_EXPORT UdUnitSystem
 {
 public:
+    enum DatabaseOrigin {
+        User,
+        System,
+        Environment
+    };
+
     UdUnitSystem();
     ~UdUnitSystem();
 
@@ -148,6 +167,8 @@ public:
     QString errorMessage() const;
 
 private:
+    friend class UdUnit;
+    UdUnitSystem(ut_system *system);
     ut_system *m_system;
     int m_error;
     QString m_errorMessage;

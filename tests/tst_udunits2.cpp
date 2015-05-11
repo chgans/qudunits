@@ -142,7 +142,7 @@ void UdUnits2Test::unitTypes_data()
     QTest::newRow("basic unit")     << QString("m")            << UdUnit::BasicUnit;
     QTest::newRow("product unit")   << QString("m.s^-1")       << UdUnit::ProductUnit;
     QTest::newRow("galilean unit")  << QString("3.14 m")       << UdUnit::GalileanUnit;
-    QTest::newRow("timestamp unit") << QString("s @ 1970T00")  << UdUnit::TimeStampUnit;
+    QTest::newRow("timestamp unit") << QString("s @ 1970T00")  << UdUnit::TimestampUnit;
     QTest::newRow("log unit")       << QString("log(re: 1mW)") << UdUnit::LogarithmicUnit;
 }
 
