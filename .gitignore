@@ -41,3 +41,8 @@ Makefile*
 
 # generated documentation
 doc/html
+
+# Coverage
+*.gc*
+*.info
+src/lcov
