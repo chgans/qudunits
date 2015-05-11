@@ -3,9 +3,10 @@
 
 #include "qudunit_global.h"
 
+#include <QMetaType>
 #include <QString>
-#include <QStringList>
 #include <QVector>
+#include <QMap>
 
 #include <udunits2.h>
 
@@ -16,7 +17,7 @@ class UdUnitConverter;
 
 class QUDUNITSHARED_EXPORT UdUnit {
 public:
-    enum Type {
+    enum UnitType {
         NullUnit = 0,
         BasicUnit,
         ProductUnit,
@@ -25,33 +26,57 @@ public:
         LogarithmicUnit
     };
 
+    enum FormatOption {
+        UseUnitName = 0,
+        UseUnitSymbol
+    };
+
+    enum FormatForm {
+        ShortForm = 0,
+        DefinitionForm
+    };
+
     UdUnit();
     UdUnit(const UdUnit &other);
     ~UdUnit();
 
     bool isValid() const;
-
-    // isBase, is DimensionLess
-    Type type() const;
+    UdUnitSystem system();
+    UnitType type() const;
     QString name() const;
     QString symbol() const;
-    QString toString() const;
-    UdUnitSystem system();
 
-    // operations
-    // scale, offset, invert, raise, root, log
+    // TODO: rename to format, add format option name/symbol and definition
+    QString format(FormatForm form = ShortForm, FormatOption option = UseUnitSymbol) const;
 
-    // Basic units: base unit or non-dimensional named unit
-    // Product units: QMap<BasicUnit, Power>
-    // Galilean units: underlyingUInit and scale or origin
-    //
-    // Log units: base and reference
+    // Basic-unit: A basic-unit is a base unit like “meter” or a non-dimensional but named unit like “radian”.
+    inline bool isBasic() const { return type() == BasicUnit; }
+    bool isDimentionless() const;
 
+    // Product-unit: unit, non-zero power
+    inline bool isProduct() const { return type() == ProductUnit; }
+    QMap<UdUnit, int> productPoweredUnits() const;
 
+    // Galilean-unit:
+    inline bool isGalilean() const { return type() == GalileanUnit; }
+    UdUnit underlyingUnit() const;
+    qreal galileanScaleFactor() const; // non-unity scale factor
+    qreal galileanOrigin() const;     // non-zero origin
+
+    // Log-unit: base and reference
+    UdUnit logBaseUnit() const;
+    qreal logReference() const;
+
+    // Timestamp-unit:
+    UdUnit timeUnit() const;
+    qreal timeOrigin() const;
+
+    // operations for equality, comparison
     friend bool operator ==(const UdUnit &lhs, const UdUnit &rhs);
     inline friend bool operator !=(const UdUnit &lhs, const UdUnit &rhs)
     { return !(lhs == rhs); }
 
+    // operations for scale, offset, invert, raise, root, log
     friend UdUnit operator *(const UdUnit &lhs, const UdUnit &rhs);
     friend UdUnit operator *(const UdUnit &lhs, qreal rhs);
     friend UdUnit operator *(qreal lhs, const UdUnit &rhs);
@@ -80,8 +105,11 @@ private:
                                        const ut_unit *reference, void *arg);
     ut_unit *m_unit;
     int m_errorStatus;
-    Type m_type;
+    UnitType m_type;
 };
+
+Q_DECLARE_METATYPE(UdUnit::UnitType);
+
 
 class QUDUNITSHARED_EXPORT UdUnitConverter {
 
@@ -95,6 +123,9 @@ public:
     bool isValid() const;
     qreal convert(qreal value);
     QVector<qreal> convert(const QVector<qreal> values);
+
+    // TODO:
+    static bool canConvert(const UdUnit &from, const UdUnit &to);
 
 private:
     UdUnit m_from;
@@ -121,5 +152,7 @@ private:
     int m_error;
     QString m_errorMessage;
 };
+
+
 
 #endif // QUDUNIT_H

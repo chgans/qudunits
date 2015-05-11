@@ -141,7 +141,7 @@ bool UdUnit::isValid() const
     return m_unit != nullptr;
 }
 
-UdUnit::Type UdUnit::type() const
+UdUnit::UnitType UdUnit::type() const
 {
     return m_type;
 }
@@ -156,11 +156,16 @@ QString UdUnit::symbol() const
     return QString(ut_get_symbol(m_unit, UT_UTF8));
 }
 
-QString UdUnit::toString() const
+QString UdUnit::format(FormatForm form, FormatOption option) const
 {
     static const int size = 256;
     char buffer[size + 1];
-    int nBytes = ut_format(m_unit, buffer, 256, UT_UTF8 | UT_NAMES);
+    int flags = UT_UTF8;
+    if (form == DefinitionForm)
+        flags |= UT_DEFINITION;
+    if (option == UseUnitName)
+        flags |= UT_NAMES;
+    int nBytes = ut_format(m_unit, buffer, 256, flags);
     if (nBytes < 0 || nBytes > size)
         return QString();
     else
