@@ -13,4 +13,4 @@ script:
  - ./bin/travis.sh
 
 after_success:
-  - cpp-coveralls -n -e /usr/include
+  - cpp-coveralls -e /usr/include
