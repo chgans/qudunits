@@ -40,6 +40,8 @@ public:
     UdUnit(const UdUnit &other);
     ~UdUnit();
 
+    QString databasePath() const;
+
     bool isValid() const;
     UdUnitSystem system();
     UnitType type() const;
@@ -51,7 +53,7 @@ public:
 
     // Basic-unit: A basic-unit is a base unit like “meter” or a non-dimensional but named unit like “radian”.
     inline bool isBasic() const { return type() == BasicUnit; }
-    bool isDimentionless() const;
+    bool isDimensionless() const;
 
     // Product-unit: unit, non-zero power
     inline bool isProduct() const { return type() == ProductUnit; }
@@ -133,6 +135,7 @@ public:
     bool isValid() const;
     qreal convert(qreal value);
     QVector<qreal> convert(const QVector<qreal> values);
+    QVector<qreal> &convert(QVector<qreal> &values);
 
     // TODO:
     static bool canConvert(const UdUnit &from, const UdUnit &to);
@@ -161,7 +164,7 @@ public:
     UdUnit unitByName(const QString &name) const;
     UdUnit unitBySymbol(const QString &name) const;
     UdUnit dimensionLessUnitOne() const;
-    UdUnit unitFromString(const QString &string) const;
+    UdUnit unitFromString(const QString &text) const;
 
     bool isValid();
     QString errorMessage() const;

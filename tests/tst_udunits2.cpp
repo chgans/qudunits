@@ -17,6 +17,8 @@ private Q_SLOTS:
     void init();
     void cleanup();
 
+    // Test construstors
+
     void unitByName_data();
     void unitByName();
     void unitBySymbol_data();
@@ -28,16 +30,21 @@ private Q_SLOTS:
     void unitTypes();
     void unitEquality_data();
     void unitEquality();
-    void upscaling_data();
-    void upscaling();
-    void downscaling_data();
-    void downscaling();
-    void multiplying_data();
-    void multiplying();
-    void dividing_data();
-    void dividing();
+
+    void offset_data();
+    void offset();
+    void scale_data();
+    void scale();
+    void product_data();
+    void product();
+    void power_data();
+    void power();
+    void logarithm_data();
+    void logarithm();
+
     void convert_data();
     void convert();
+    // TODO: operation on invalid unit yields invalid units
 
 private:
     UdUnitSystem *m_system;
@@ -83,6 +90,10 @@ void UdUnits2Test::unitByName()
     QFETCH(bool, validity);
     UdUnit unit = m_system->unitByName(name);
     QVERIFY(unit.isValid() == validity);
+    if (unit.isValid())
+        QVERIFY(unit.name() == name);
+    else
+        QVERIFY(unit.name() == QString(""));
 }
 
 void UdUnits2Test::unitBySymbol_data()
@@ -101,6 +112,10 @@ void UdUnits2Test::unitBySymbol()
     QFETCH(bool, validity);
     UdUnit unit = m_system->unitBySymbol(symbol);
     QVERIFY(unit.isValid() == validity);
+    if (unit.isValid())
+        QVERIFY(unit.symbol() == symbol);
+    else
+        QVERIFY(unit.symbol() == QString(""));
 }
 
 // TBD: Are we ok with null and empty strings leading the dimensionless unit one?
@@ -130,6 +145,16 @@ void UdUnits2Test::dimensionLessUnit()
 {
     UdUnit unit = m_system->dimensionLessUnitOne();
     QVERIFY(unit.isValid() == true);
+    QVERIFY(unit.isDimensionless() == true);
+#if 0 // FIXME: this crashes
+    unit = m_system->unitFromString("m");
+    QVERIFY(unit.isValid() == true);
+    QVERIFY(unit.isDimensionless() == false);
+#else // But not this one
+    UdUnit unit2 = m_system->unitFromString("m");
+    QVERIFY(unit2.isValid() == true);
+    QVERIFY(unit2.isDimensionless() == false);
+#endif
 }
 
 void UdUnits2Test::unitTypes_data()
@@ -177,84 +202,114 @@ void UdUnits2Test::unitEquality()
     QVERIFY((unit1 != unit2) != equality);
 }
 
-// TBD: invalid units
-void UdUnits2Test::upscaling_data()
+void UdUnits2Test::offset_data()
 {
-    QTest::addColumn<QString>("symbol");
+    QTest::addColumn<QString>("input");
+    QTest::addColumn<qreal>("offset");
+    QTest::addColumn<QString>("output");
+    QTest::newRow("K @ 273.15") << QString("kelvin") << 273.15 << QString("degC");
+}
+
+void UdUnits2Test::offset()
+{
+    QFETCH(QString, input);
+    QFETCH(qreal, offset);
+    QFETCH(QString, output);
+    UdUnit inputUnit = m_system->unitFromString(input);
+    UdUnit outputUnit = m_system->unitFromString(output);
+    QVERIFY(inputUnit + offset == outputUnit);
+    QVERIFY(offset + inputUnit == outputUnit);
+    QVERIFY(outputUnit - offset == inputUnit);
+    QVERIFY(offset - outputUnit == 0.0 - inputUnit); // TBD: add operator -(const UdUnit &rhs)
+}
+
+// TBD: invalid units
+void UdUnits2Test::scale_data()
+{
+    QTest::addColumn<QString>("input");
     QTest::addColumn<qreal>("multiplier");
-    QTest::addColumn<QString>("result");
+    QTest::addColumn<QString>("output");
     QTest::newRow("1000*g = 1 kg")  << QString("g")  << 1000.0 << "kg";
-    QTest::newRow("0.001*g = 1 ug") << QString("g")  << 0.001  << "1e-06 kg";
+    QTest::newRow("0.001*g = 1 mg") << QString("g")  << 0.001  << "mg";
     QTest::newRow("1*kg = 1 kg")    << QString("kg") << 1.0    << "kg";
 }
 
 // TBD: invalid units
-void UdUnits2Test::upscaling()
+void UdUnits2Test::scale()
 {
-    QFETCH(QString, symbol);
+    QFETCH(QString, input);
     QFETCH(qreal, multiplier);
-    QFETCH(QString, result);
-    UdUnit unit = m_system->unitBySymbol(symbol);
-    QVERIFY((unit*multiplier).format() == result);
-    QVERIFY((multiplier*unit).format() == result);
+    QFETCH(QString, output);
+    UdUnit inputUnit = m_system->unitFromString(input);
+    UdUnit outputUnit = m_system->unitFromString(output);
+    QVERIFY(inputUnit*multiplier == outputUnit);
+    QVERIFY(multiplier*inputUnit == outputUnit);
+    QVERIFY(outputUnit/multiplier == inputUnit);
+    QVERIFY(multiplier/outputUnit == 1.0/inputUnit);
+    QVERIFY((outputUnit/inputUnit).isDimensionless() == true);
+    QVERIFY((inputUnit/outputUnit).isDimensionless() == true);
 }
 
-// TBD: invalid units
-void UdUnits2Test::downscaling_data()
+void UdUnits2Test::product_data()
 {
-    QTest::addColumn<QString>("symbol");
-    QTest::addColumn<qreal>("divider");
+    QTest::addColumn<QString>("input1");
+    QTest::addColumn<QString>("input2");
+    QTest::addColumn<QString>("output");
+    QTest::newRow("m*s = 1 m.s") << QString("m")  << QString("s") << QString("m.s");
+    QTest::newRow("X*Y = 1 ohm") << QString("s^-3.A^-2") << QString("m^2.kg") << QString("ohm");
+}
+
+void UdUnits2Test::product()
+{
+    QFETCH(QString, input1);
+    QFETCH(QString, input2);
+    QFETCH(QString, output);
+    UdUnit inputUnit1 = m_system->unitFromString(input1);
+    UdUnit inputUnit2 = m_system->unitFromString(input2);
+    UdUnit outputUnit = m_system->unitFromString(output);
+    QVERIFY(inputUnit1*inputUnit2 == outputUnit);
+    QVERIFY(inputUnit1 == outputUnit/inputUnit2);
+    QVERIFY(inputUnit2*inputUnit1 == outputUnit);
+    QVERIFY(inputUnit2 == outputUnit/inputUnit1);
+}
+
+void UdUnits2Test::power_data()
+{
+    QTest::addColumn<QString>("base");
+    QTest::addColumn<int>("power");
     QTest::addColumn<QString>("result");
-    QTest::newRow("g/1000 = 1 ug")  << QString("g")  << 1000.0 << "1e-06 kg";
-    QTest::newRow("g/0.001 = 1 kg") << QString("g")  << 0.001  << "kg";
-    QTest::newRow("kg/1 = 1 kg")    << QString("kg") << 1.0    << "kg";
+    QTest::newRow("m by 3")   << QString("m")   << 3 << QString("m^3");
+    QTest::newRow("ohm by 2") << QString("ohm") << 2 << QString("m^4.kg^2.s^-6.A^-4");
 }
 
-// TBD: invalid units
-void UdUnits2Test::downscaling()
+void UdUnits2Test::power()
 {
-    QFETCH(QString, symbol);
-    QFETCH(qreal, divider);
+    QFETCH(QString, base);
+    QFETCH(int, power);
     QFETCH(QString, result);
-    UdUnit unit = m_system->unitBySymbol(symbol);
-    QVERIFY((unit/divider).format() == result);
+    UdUnit baseUnit = m_system->unitFromString(base);
+    UdUnit resultUnit = m_system->unitFromString(result);
+    QVERIFY(baseUnit.raisedBy(power) == resultUnit);
+    QVERIFY(resultUnit.rootedBy(power) == baseUnit);
 }
 
-void UdUnits2Test::multiplying_data()
+void UdUnits2Test::logarithm_data()
 {
-    QTest::addColumn<QString>("symbol1");
-    QTest::addColumn<QString>("symbol2");
+    QTest::addColumn<qreal>("base");
+    QTest::addColumn<QString>("reference");
     QTest::addColumn<QString>("result");
-    QTest::newRow("m*s = 1 m.s")  << QString("m")  << QString("s") << QString("m·s");
+    QTest::newRow("W by 10")   << 10.0 << QString("W") << QString("lg(re 1 m^2.kg.s^-3)");
 }
 
-void UdUnits2Test::multiplying()
+void UdUnits2Test::logarithm()
 {
-    QFETCH(QString, symbol1);
-    QFETCH(QString, symbol2);
+    QFETCH(qreal, base);
+    QFETCH(QString, reference);
     QFETCH(QString, result);
-    UdUnit unit1 = m_system->unitBySymbol(symbol1);
-    UdUnit unit2 = m_system->unitBySymbol(symbol2);
-    QVERIFY((unit1*unit2).format() == result);
-    QVERIFY((unit2*unit1).format() == result);
-}
-
-void UdUnits2Test::dividing_data()
-{
-    QTest::addColumn<QString>("symbol1");
-    QTest::addColumn<QString>("symbol2");
-    QTest::addColumn<QString>("result");
-    QTest::newRow("m/s = 1 m.s⁻¹")  << QString("m")  << QString("s") << QString("m·s⁻¹");
-}
-
-void UdUnits2Test::dividing()
-{
-    QFETCH(QString, symbol1);
-    QFETCH(QString, symbol2);
-    QFETCH(QString, result);
-    UdUnit unit1 = m_system->unitBySymbol(symbol1);
-    UdUnit unit2 = m_system->unitBySymbol(symbol2);
-    QVERIFY((unit1/unit2).format() == result);
+    UdUnit referenceUnit = m_system->unitFromString(reference);
+    UdUnit resultUnit = m_system->unitFromString(result);
+    QVERIFY(referenceUnit.toLogarithmic(base) == resultUnit);
+    // No log reciprocal, ie. power()
 }
 
 void UdUnits2Test::convert_data()
@@ -282,7 +337,6 @@ void UdUnits2Test::convert()
     if (validity)
         QVERIFY(converter.convert(value) == result);
 }
-
 
 QTEST_APPLESS_MAIN(UdUnits2Test)
 
