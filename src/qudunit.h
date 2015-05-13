@@ -40,8 +40,6 @@ public:
     UdUnit(const UdUnit &other);
     ~UdUnit();
 
-    QString databasePath() const;
-
     bool isValid() const;
     UdUnitSystem system();
     UnitType type() const;
@@ -153,25 +151,37 @@ class QUDUNITSHARED_EXPORT UdUnitSystem
 {
 public:
     enum DatabaseOrigin {
-        User,
-        System,
-        Environment
+        NoOrigin,
+        UserOrigin,
+        SystemOrigin,
+        EnvironmentOrigin
     };
 
     UdUnitSystem();
     ~UdUnitSystem();
 
+    static UdUnitSystem *loadDatabase(const QString &pathname = QString());
+
     UdUnit unitByName(const QString &name) const;
-    UdUnit unitBySymbol(const QString &name) const;
+    UdUnit unitBySymbol(const QString &symbol) const;
     UdUnit dimensionLessUnitOne() const;
     UdUnit unitFromString(const QString &text) const;
 
     bool isValid();
     QString errorMessage() const;
 
+    QString databasePath() const;
+    DatabaseOrigin databaseOrigin() const;
+
+    UdUnit addBaseUnit(const QString &name, const QString &symbol);
+    UdUnit addDimensionlessUnit(const QString &name, const QString &symbol);
+    bool addUnit(const UdUnit &unit, const QString &name, const QString &symbol);
+    bool addPrefix(const QString &name, const QString &symbol);
+
 private:
     friend class UdUnit;
-    UdUnitSystem(ut_system *system);
+    UdUnitSystem(ut_system *system, ut_status status);
+    UdUnitSystem(const UdUnitSystem &other);
     ut_system *m_system;
     int m_error;
     QString m_errorMessage;

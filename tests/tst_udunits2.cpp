@@ -57,7 +57,7 @@ UdUnits2Test::UdUnits2Test()
 void UdUnits2Test::initTestCase()
 {
     ut_set_error_message_handler(ut_ignore);
-    m_system = new UdUnitSystem();
+    m_system = UdUnitSystem::loadDatabase();
     QVERIFY(m_system->isValid());
 }
 

@@ -5,8 +5,9 @@
 
 /*!
  * \class UdUnitSystem
+ * \ingroup index
  * \preliminary
- * \brief The UdUnitSystem class represent a unit-system.
+ * \brief The UdUnitSystem class represents a unit-system.
  *
  * A unit-system is a set of units that are all defined in terms of the same
  * set of base units. In the SI system of units, for example, the base units
@@ -18,28 +19,128 @@
  * It is not possible to convert numeric values between units of different unit-systems.
  * Similarly, units belonging to different unit-systems always compare unequal.
  *
- * TBD: XML databases
+ * \section1 XML databases
+ *
+ * \section1 Validity of a unit-system
+ *
+ * A unit-system loaded from a database is valid if XYZ...
+ * An empty unit-system is always valid, an invalid unit-system is considered empty.
+ * TBD: isValid() vs hasError(), lastErrorMessage() and ut_set_error_message_handler()
+ *
+ * \section1 Unit identifiers
+ *
+ * Within a unit-system, you can map an identifier to a unit and vice versa.
+ * If an identifier maps to a unit, then the unit can be retrieved from the unit-system
+ * via the identifier. Similarly, if a unit maps to an identifier, then the unit
+ * can be printed using the identifier.
+ *
+ * There a two kinds of identifiers: names and symbols.
+ *
+ * \section1 Obtaining a unit-system
+ *
+ * Typically, you would obtain a unit-system of predefined units by reading the
+ * default unit database using loadDatabase() with no argument.
+ *
+ * If this doesn't quite match your needs, then there are alternatives.
+ * Together with the typical solution, the means for obtaining a useful unit-system
+ * are (in order of increasing complexity):
+ * \list
+ *  \li Obtain the default unit-system using loadDatabase() with no argument.
+ *  \li Copy and customize the unit database XML file and then call loadDatabase()
+ *      with the pathname of the customized database to obtain a customized unit-system.
+ *  \li Same as either of the above but then adding new units to the unit-system
+ *      using addUnit().
+ *  \li Same as the above but starting with an empty unit-system, in which case
+ *      you will definitely have to start with addBaseUnit() and addDimensionlessUnit().
+ * \endlist
+ *
+ * \section1 Getting a unit from a unit-system
+ *
+ * Use unitByName() to retrieve a unit by name and unitBySymbol() to retreive a
+ * unit by symbol.
+ *
+ * \section1 Adding new units to a unit-system
+ *
+ * \note If you use loadDatabase(), then you shouldn't normally need to do this.
+ *
+ * \section1 Adding new unit-prefixes to a unit-system
+ *
+ * \note If you use loadDatabase(), then you shouldn't normally need to do this.
+ *
  */
 
+/*!
+ * \enum UdUnitSystem::DatabaseOrigin
+ * This enum type specifies where the unit database has been loaded from:
+ * \value NoOrigin
+ *        The unit-system has not been loaded from a database.
+ * \value UserOrigin
+ *        The unit-system has been loaded with a database specified by the user.
+ * \value EnvironmentOrigin
+ *        The unit-system has been loaded with a database which pathname has been
+ *        found in the \e {UDUNITS2_XML_PATH} environment variable.
+ * \value SystemOrigin
+ *        The unit-system has been loaded with the system default database.
+ *        (As determined by the \UU package at compile-time).
+ */
+
+/*!
+ * Constructs an empty unit-system.
+ *
+ * An empty unit-system has only one unit defined: the dimensionless unit one.
+ */
 UdUnitSystem::UdUnitSystem()
 {
-    m_system = ut_read_xml(nullptr);
-    if (m_system == nullptr)
+    m_errorMessage = QString();
+    ut_set_status(UT_SUCCESS);
+    m_system = ut_new_system();
+    if (m_system == nullptr) {
         m_error = ut_get_status();
-    else
-        m_error = UT_SUCCESS;
+        //m_errorMessage = ...;
+    }
 }
 
+
+/*!
+ * \internal
+ * Constructs a UdUnitSystem using \UU \a system internal represention.
+ */
+UdUnitSystem::UdUnitSystem(ut_system *system, ut_status status):
+    m_system(system), m_error(status)
+{
+
+}
+
+/*!
+ * Destroys the unit-system.
+ */
 UdUnitSystem::~UdUnitSystem()
 {
     ut_free_system(m_system);
 }
 
 /*!
+ * Returns a unit-system corresponding to the XML-formatted unit-database specified by \a pathname.
+ * If \a pathname is an empty string (the default), then \UU will try to load
+ * a database using the environment variable \e {UDUNITS2_XML_PATH}, if not set,
+ * then \UU will load its default database.
+ * \sa databaseOrigin(), databasePath()
+ */
+UdUnitSystem *UdUnitSystem::loadDatabase(const QString &pathname)
+{
+    ut_set_status(UT_SUCCESS);
+    const char *path = nullptr;
+    if (!pathname.isEmpty())
+        path = pathname.toUtf8().constData();
+    ut_system *system = ut_read_xml(path);
+    return new UdUnitSystem(system, ut_get_status());
+}
+
+/*!
  * Returns the UdUnit to which \a name maps from this unit-system or an invalid
  * UdUnit if no such unit exists ot if this unit-system is invalid.
  * Name comparisons are case-sensitive.
- * \sa UdUnitSystem::isValid() and UdUnit::isValid()
+ * \sa UdUnitSystem::isValid(), UdUnit::isValid()
  */
 UdUnit UdUnitSystem::unitByName(const QString &name) const
 {
@@ -52,12 +153,12 @@ UdUnit UdUnitSystem::unitByName(const QString &name) const
  * Returns the UdUnit to which \a symbol maps from this unit-system or an invalid
  * UdUnit if no such unit exists or if this unit-system is invalid.
  * Symbol comparisons are case-sensitive.
- * \sa UdUnitSystem::isValid() and UdUnit::isValid()
+ * \sa UdUnitSystem::isValid(), UdUnit::isValid()
  */
-UdUnit UdUnitSystem::unitBySymbol(const QString &name) const
+UdUnit UdUnitSystem::unitBySymbol(const QString &symbol) const
 {
     ut_set_status(UT_SUCCESS);
-    ut_unit *unit = ut_get_unit_by_symbol(m_system, name.toUtf8().constData());
+    ut_unit *unit = ut_get_unit_by_symbol(m_system, symbol.toUtf8().constData());
     int status = ut_get_status();
     return UdUnit(unit, status);
 }
@@ -65,7 +166,7 @@ UdUnit UdUnitSystem::unitBySymbol(const QString &name) const
 /*!
  * Returns the dimensionless unit one of this unit-system or an Invalid unit if
  * this unit-system is invalid.
- * \sa UdUnitSystem::isValid() and UdUnit::isValid()
+ * \sa UdUnitSystem::isValid(), UdUnit::isValid()
  */
 UdUnit UdUnitSystem::dimensionLessUnitOne() const
 {
@@ -107,14 +208,48 @@ QString UdUnitSystem::errorMessage() const
 }
 
 /*!
- * \internal
- * Constructs a UdUnitSystem using libudunits2 \a system internal represention.
+ * Creates and adds a new base-unit to this unit-system.
+ * This function returns the new unit.
+ * If \a name is not empty then this unit can then be retreived using
+ * unitByName(), similary if \a symbol is not empty then this unit can then be
+ * retreived using unitBySymbol().
  */
-UdUnitSystem::UdUnitSystem(ut_system *system):
-    m_system(system)
+UdUnit UdUnitSystem::addBaseUnit(const QString &name, const QString &symbol)
 {
-
+    Q_UNUSED(name);
+    Q_UNUSED(symbol);
+    return UdUnit();
 }
+
+/*!
+ * Creates and adds a new dimensionless-unit to this unit-system.
+ * This function returns the new unit.
+ * If \a name is not empty then this unit can then be retreived using
+ * unitByName(), similary if \a symbol is not empty then this unit can then be
+ * retreived using unitBySymbol().
+ */
+UdUnit UdUnitSystem::addDimensionlessUnit(const QString &name, const QString &symbol)
+{
+    Q_UNUSED(name);
+    Q_UNUSED(symbol);
+    return UdUnit();
+}
+
+/*!
+ * Adds a new dimensionless-unit to this unit-system.
+ * This function returns XXX.
+ * If \a name is not empty then this unit can then be retreived using
+ * unitByName(), similary if \a symbol is not empty then this unit can then be
+ * retreived using unitBySymbol().
+ */
+bool UdUnitSystem::addUnit(const UdUnit &unit, const QString &name, const QString &symbol)
+{
+    Q_UNUSED(unit);
+    Q_UNUSED(name);
+    Q_UNUSED(symbol);
+    return false;
+}
+
 
 /*!
  * \internal
@@ -134,6 +269,9 @@ ut_status UdUnit::visit_product(const ut_unit *_unit, int count, const ut_unit *
                                const int *powers, void *arg)
 {
     Q_UNUSED(_unit);
+    Q_UNUSED(count);
+    Q_UNUSED(basicUnits);
+    Q_UNUSED(powers);
     UdUnit *unit = (UdUnit*)(arg);
     unit->m_type = UdUnit::ProductUnit;
     return UT_SUCCESS;
@@ -146,6 +284,9 @@ ut_status UdUnit::visit_galilean(const ut_unit *_unit, double scale, const ut_un
                                 double origin, void *arg)
 {
     Q_UNUSED(_unit);
+    Q_UNUSED(scale);
+    Q_UNUSED(underlyingUnit);
+    Q_UNUSED(origin);
     UdUnit *unit = (UdUnit*)(arg);
     unit->m_type = UdUnit::GalileanUnit;
     return UT_SUCCESS;
@@ -158,6 +299,8 @@ ut_status UdUnit::visit_timestamp(const ut_unit *_unit, const ut_unit *timeUnit,
                                  double origin, void *arg)
 {
     Q_UNUSED(_unit);
+    Q_UNUSED(timeUnit);
+    Q_UNUSED(origin);
     UdUnit *unit = (UdUnit*)(arg);
     unit->m_type = UdUnit::TimestampUnit;
     return UT_SUCCESS;
@@ -170,14 +313,13 @@ ut_status UdUnit::visit_logarithmic(const ut_unit *_unit, double base,
                                    const ut_unit *reference, void *arg)
 {
     Q_UNUSED(_unit);
+    Q_UNUSED(base);
+    Q_UNUSED(reference);
     UdUnit *unit = (UdUnit*)(arg);
     unit->m_type = UdUnit::LogarithmicUnit;
     return UT_SUCCESS;
 }
 
-/*!
- * \internal
- */
 ut_visitor UdUnit::m_visitor = {
     &UdUnit::visit_basic,
     &UdUnit::visit_product,
@@ -188,16 +330,18 @@ ut_visitor UdUnit::m_visitor = {
 
 /*!
  * \class UdUnit
+ * \ingroup index
  * \preliminary
  * \brief The UdUnit class represents a unit.
+ *
  * TBD
  * \sa UdUnitSystem
  */
 
 /*!
  * \internal
- * Constructs a UdUnit using libudunits2 \a unit internal represention and
- * libudunits2 \a status internal status.
+ * Constructs a UdUnit using \UU \a unit internal represention and
+ * \UU \a status internal status.
  */
 UdUnit::UdUnit(ut_unit *unit, int status):
     m_unit(unit), m_errorStatus(status),
@@ -248,8 +392,9 @@ bool UdUnit::isValid() const
  */
 UdUnitSystem UdUnit::system()
 {
+    ut_set_status(UT_SUCCESS);
     ut_system *system = ut_get_system(m_unit);
-    return UdUnitSystem(system);
+    return UdUnitSystem(system, ut_get_status());
 }
 
 /*!
@@ -280,7 +425,7 @@ QString UdUnit::symbol() const
 
 /*!
  * Return an UTF-8 textual representation of this unit according to \a form and \a option.
- * \sa UdUnit::FormatForm and UdUnit::FormatOption
+ * \sa UdUnit::FormatForm, UdUnit::FormatOption
  */
 QString UdUnit::format(FormatForm form, FormatOption option) const
 {
@@ -306,7 +451,7 @@ bool UdUnit::isDimensionless() const
 {
     ut_set_status(UT_SUCCESS);
     int result = ut_is_dimensionless(m_unit);
-    int status = ut_get_status();
+    //int status = ut_get_status();
     return result != 0;
 }
 
@@ -365,7 +510,7 @@ UdUnit UdUnit::inverted() const
 }
 
 /*!
- * Returns the unit equal to this unit raised by \power.
+ * Returns the unit equal to this unit raised by \a power.
  */
 UdUnit UdUnit::raisedBy(int power) const
 {
@@ -499,13 +644,16 @@ bool operator ==(const UdUnit &lhs, const UdUnit &rhs)
 
 /*!
  * \class UdUnitConverter
- * \brief This class allows to do convertion between 2 units.
+ * \preliminary
+ * \ingroup index
+ * \brief The UdUnitConverter class converts values between 2 units.
+ *
  * TBD
  * \sa UdUnitSystem
  */
 
 /*!
- * Constructs a converter from \a from unit to \to unit.
+ * Constructs a converter from \a from unit to \a to unit.
  */
 UdUnitConverter::UdUnitConverter(const UdUnit &from, const UdUnit &to):
     m_from(from), m_to(to), m_converter(nullptr)
