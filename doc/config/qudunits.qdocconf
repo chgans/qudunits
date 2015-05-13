@@ -1,0 +1,37 @@
+project     = "Qt Unidata Units"
+description = "QUdUnits"
+
+headerdirs = $SRCDIR/../src/
+sourcedirs = $SRCDIR $SRCDIR/../src/
+imagedirs = $SRCDIR/images $SRCDIR/templates/images
+outputdir = $OUTDIR
+exampledirs = $SRCDIR
+
+include(macros.qdocconf)
+include(qt-cpp-ignore.qdocconf)
+Cpp.ignoretokens += QUDUNITSHARED_EXPORT
+
+sources.fileextensions  = "*.qdoc *.cpp"
+headers.fileextensions = "*.h"
+
+# qhp.projects                  = QUdUnits
+# qhp.QUdUnits.file             = qudunits.qhp
+# qhp.QUdUnits.namespace        = net.chgans.qudunits.$QUU_VERSION_TAG
+# qhp.QUdUnits.virtualFolder    = doc
+# qhp.QUdUnits.indexTitle       = Qt Unitdata Units
+# qhp.QUdUnits.filterAttributes = quu $QUU_VERSION
+# qhp.QUdUnits.customFilters.QUdUnits.name = Qt Unidata Units $QUU_VERSION
+# qhp.QUdUnits.customFilters.QUdUnits.filterAttributes = quu $QUU_VERSION
+# qhp.QUdUnits.indexRoot        =
+
+# qhp.QUdUnits.subprojects = manual
+# qhp.QUdUnits.subprojects.manual.title = QUdUnits API Reference
+# qhp.QUdUnits.subprojects.manual.indexTitle = QUdUnits API Reference
+# qhp.QUdUnits.subprojects.manual.type = manual
+
+# Doxygen compatibility commands
+macro.see                       = "\\sa"
+macro.function                  = "\\fn"
+
+navigation.homepage = "QUdUnits API reference"
+buildversion        = "QUdUnits $QUU_VERSION"

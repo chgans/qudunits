@@ -1,0 +1,21 @@
+/*!
+
+    \page index.html
+    \title QUdUnits API Reference
+
+    \section1 Introduction
+
+    The \QUU library is a Qt/C++ wrapper around the Unidata \l {http://www.unidata.ucar.edu/software/udunits/}{UDUNITS C library}.
+
+    The \UU package supports units of physical quantities.
+    It provides for arithmetic manipulation of units and for conversion
+    of numeric values between compatible units.
+    The \UU package contains an extensive unit database, which is in XML format and
+    user-extendable.
+
+    \section1 Classes
+
+    The \QUU acts as a thin and transparent wrapper around the \UU C library by
+    grouping functions into 3 main classes:
+    \generatelist annotatedclasses
+*/
