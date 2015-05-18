@@ -236,7 +236,7 @@ UdUnit UdUnitSystem::addDimensionlessUnit(const QString &name, const QString &sy
 }
 
 /*!
- * Adds a new dimensionless-unit to this unit-system.
+ * Adds a new unit to this unit-system.
  * This function returns XXX.
  * If \a name is not empty then this unit can then be retreived using
  * unitByName(), similary if \a symbol is not empty then this unit can then be
